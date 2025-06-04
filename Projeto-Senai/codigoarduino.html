@@ -1,0 +1,51 @@
+#include <Servo.h>
+
+    // Definição dos pinos
+    const int SERVO_PIN = 9;    // Servo conectado ao pino D9
+    const int BUZZER_PIN = 8;   // Buzzer conectado ao pino D8
+    
+    // Criação do objeto Servo
+    Servo myservo;
+    
+    void setup() {
+      // Inicializa a comunicação serial
+      Serial.begin(9600);
+      
+      // Configura o servo
+      myservo.attach(SERVO_PIN);
+      myservo.write(0);  // Posição inicial
+      
+      // Configura o buzzer
+      pinMode(BUZZER_PIN, OUTPUT);
+      digitalWrite(BUZZER_PIN, LOW);  // Desliga o buzzer inicialmente
+      
+      // Teste inicial dos componentes
+      digitalWrite(BUZZER_PIN, HIGH);
+      delay(200);
+      digitalWrite(BUZZER_PIN, LOW);
+      
+      myservo.write(45);
+      delay(300);
+      myservo.write(0);
+    }
+    
+    void loop() {
+      // Verifica se há dados disponíveis na porta serial
+      if (Serial.available() > 0) {
+        // Lê o caractere enviado pelo Python
+        char command = Serial.read();
+        
+        // Processa o comando
+        if (command == '1') {  // EPI detectado
+          myservo.write(90);   // Gira o servo para 90 graus
+          digitalWrite(BUZZER_PIN, LOW);  // Desliga o buzzer
+        } 
+        else if (command == '0') {  // EPI não detectado
+          myservo.write(0);    // Retorna o servo para 0 graus
+          digitalWrite(BUZZER_PIN, HIGH);  // Liga o buzzer
+        }
+      }
+      
+      // Pequena pausa para estabilidade
+      delay(10);
+    }

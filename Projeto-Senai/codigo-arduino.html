@@ -1,0 +1,95 @@
+#include <Servo.h>
+
+  // Definição dos pinos
+  const int SERVO_PIN = 9;    // Servo conectado ao pino D9
+  const int BUZZER_PIN = 8;   // Buzzer conectado ao pino D8
+  
+  // Criação do objeto Servo
+  Servo myservo;
+  
+  // Variáveis para acompanhar estado atual
+  bool epiDetectado = false;
+  bool buzzerTocado = false;
+  bool sistemaPausado = false;
+  
+  void setup() {
+    Serial.begin(9600);
+    Serial.println("Iniciando...");
+    
+    pinMode(BUZZER_PIN, OUTPUT);
+    digitalWrite(BUZZER_PIN, LOW);
+    
+    Serial.println("Configurando servo...");
+    myservo.attach(SERVO_PIN);
+    // Inicializa o servo na posição parada
+    myservo.write(90);
+    
+    Serial.println("Sistema pronto para receber comandos");
+  }
+  
+  void loop() {
+    if (Serial.available() > 0) {
+      char command = Serial.read();
+      
+      if (command == '1') {  // EPI detectado
+        Serial.println("EPI detectado - Servo gira continuamente");
+        epiDetectado = true;
+        buzzerTocado = false;
+        
+        if (!sistemaPausado) {
+          // Faz o servo girar continuamente (sentido horário)
+          // Para servo de rotação contínua: 0 é velocidade máxima em um sentido
+          // Para servo normal: essa linha fará o servo ir para a posição 0°
+          myservo.write(0);
+        }
+        
+        digitalWrite(BUZZER_PIN, LOW); // Garante que o buzzer esteja desligado
+      }
+      
+      else if (command == '0') {  // EPI não detectado
+        Serial.println("EPI NÃO detectado - Servo para e buzzer toca duas vezes");
+        epiDetectado = false;
+        
+        // Para o servo
+        myservo.write(90); // 90 graus para parar servo de rotação contínua
+        
+        // Toca o buzzer duas vezes apenas se não tiver tocado antes neste ciclo
+        if (!buzzerTocado && !sistemaPausado) {
+          tocarBuzzerDuasVezes();
+          buzzerTocado = true;
+        }
+      }
+      
+      else if (command == '2') {  // Comando para encerrar o sistema
+        Serial.println("Comando de encerramento recebido - Parando todos os dispositivos");
+        sistemaPausado = true;
+        
+        // Para o servo
+        myservo.write(90);
+        
+        // Desliga o buzzer
+        digitalWrite(BUZZER_PIN, LOW);
+      }
+      
+      else {
+        Serial.print("Comando desconhecido: ");
+        Serial.println(command);
+      }
+    }
+    
+    delay(10);  // Pequena pausa para estabilidade
+  }
+  
+  // Função para tocar o buzzer duas vezes sem usar loop no loop principal
+  void tocarBuzzerDuasVezes() {
+    // Primeiro bipe
+    digitalWrite(BUZZER_PIN, HIGH);
+    delay(200);
+    digitalWrite(BUZZER_PIN, LOW);
+    delay(200);
+    
+    // Segundo bipe
+    digitalWrite(BUZZER_PIN, HIGH);
+    delay(200);
+    digitalWrite(BUZZER_PIN, LOW);
+  }
